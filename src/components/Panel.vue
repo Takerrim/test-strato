@@ -37,14 +37,66 @@
       v-for="(item,index) in items"
       :key="index"
       >
-        <Item
-        v-if="visible" 
-        :name="item.name"
-        :quantity="item.quantity"
-        :price="item.price"
-        :index="index"
-        :itemsList="items"
-        />
+      <div class="item-block">
+        <div>
+          <span class="item-name">{{item.name}}</span>
+        </div>
+        <div class="quantity-block">
+          <span 
+          class="item-quantity" 
+          v-if="!item.editing"
+          >
+          {{item.quantity}}
+          </span>
+          <input 
+          type="number" 
+          v-model="item.quantity" 
+          v-else 
+          >
+        </div>
+        <div class="price-block">
+          <span 
+          class="item-price" 
+          v-if="!item.editing"
+          >
+          ${{item.price}}
+          </span>
+          <input 
+          type="number" 
+          v-model="item.price" 
+          v-else 
+          >
+        </div>
+        <div>
+          <div class="garbage">
+            <div v-if="!item.editing">
+              <font-awesome-icon
+              icon="trash" 
+              class="trash-icon"
+              @click="removeItem(item,index)"
+              />
+            </div>
+            <div v-if="!item.editing">
+              <font-awesome-icon
+              icon="pencil-ruler" 
+              @click="editItem(item)"
+              />
+            </div>
+            <div v-if="item.editing"> 
+              <font-awesome-icon
+              icon="save" 
+              @click="doneEdit(item)"
+              />
+            </div>
+            <div v-if="item.editing">
+              <font-awesome-icon
+              icon="window-close" 
+              @click="cancelEdit(item,index)"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
     <div class="summary">
@@ -54,38 +106,66 @@
 </template>
 
 <script>
-import Item from './Item.vue'
 
 export default {
-   components: {
-    Item
-  },
   name: 'Panel',
   data () {
     return {
+      localName: null,
+      localQuantity: null,
+      localPrice: null,
+      counter: 0,
       name: '',
-      quantity: Number,
-      price: Number,
+      quantity: null,
+      price: null,
       visible: false,
-      items: []
+      items: [],
+      localItems: []
     }
   },
   methods: {
     createItem () {
-      if(this.name != '' && this.quantity != null && this.price != null) {
-        this.items.push({
-          name: this.name,
-          quantity: this.quantity,
-          price: this.price
-        })
-      }
-      localStorage.setItem('name', this.name);
-      localStorage.setItem('quantity', this.quantity);
-      localStorage.setItem('price', this.price);
+      if(this.name == '' || this.quantity === null || this.price === null) return;
+      
+      this.items.push({
+        name: this.name,
+        quantity: this.quantity,
+        price: this.price,
+        id: this.counter,
+        editing: false,
+      })
+      localStorage.setItem('items', JSON.stringify(this.items));
+      let localStor = JSON.parse(localStorage['items']);
+      this.localItems = localStor;
+      this.counter++;
+      
       this.visible = true;
       this.name = '';
       this.quantity = null;
       this.price = null;
+    },
+    removeItem (item,index) {
+      this.items.splice(index,1);
+      this.localItems.splice(index,1);
+      this.counter--;
+      localStorage.setItem('items', JSON.stringify(this.localItems));
+    },
+    editItem (item) {
+      let editedItems = [...this.items];
+      localStorage.setItem('items', JSON.stringify(editedItems));
+      item.editing = true;
+    },
+    doneEdit (item) {
+      item.editing = false;
+    },
+    cancelEdit (item) {
+      let prevArr = JSON.parse(localStorage['items']);
+      let prevItem = prevArr.find(i => {
+        return i.id === item.id;
+      });
+      item.quantity = prevItem.quantity;
+      item.price = prevItem.price;
+      item.editing = false;
     }
   }
 }
@@ -142,6 +222,41 @@ input {
 .summary h2 {
   font-weight: lighter;
   margin: 0;
+}
+
+.item-block {
+  display: flex;
+  justify-content: space-between;
+  width: 80%;
+  padding: 15px 9px;
+  text-align: left;
+}
+
+.item-block span {
+  font-size: 0.83em;
+}
+
+
+.item-block div {
+  width: 10%;
+}
+
+.item-block div:first-of-type {
+  margin-right: 20px;
+}
+
+.item-block .price-block {
+  margin-left: 15px;
+}
+
+
+.item-block .garbage {
+  display: flex;
+  cursor: pointer;
+}
+
+.item-block .garbage div {
+  margin-right: 45px;
 }
 
 </style>
