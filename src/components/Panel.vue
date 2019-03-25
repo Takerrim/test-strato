@@ -41,7 +41,7 @@
         <div>
           <span class="item-name">{{item.name}}</span>
         </div>
-        <div class="quantity-block">
+        <div class="item-wrapper">
           <span 
           class="item-quantity" 
           v-if="!item.editing"
@@ -49,24 +49,26 @@
           {{item.quantity}}
           </span>
           <input 
+          class="editInput"
           type="number" 
           v-model="item.quantity" 
           v-else 
           >
         </div>
-        <div class="price-block">
-          <span 
+          <div class="item-wrapper">
+            <span 
           class="item-price" 
           v-if="!item.editing"
           >
           ${{item.price}}
           </span>
-          <input 
+          <input
+          class="editInput" 
           type="number" 
           v-model="item.price" 
           v-else 
           >
-        </div>
+          </div>
         <div>
           <div class="garbage">
             <div v-if="!item.editing">
@@ -85,7 +87,7 @@
             <div v-if="item.editing"> 
               <font-awesome-icon
               icon="save" 
-              @click="doneEdit(item)"
+              @click="thirdHandler(item)"
               />
             </div>
             <div v-if="item.editing">
@@ -186,7 +188,6 @@ export default {
       if(this.items.length === 0) {
         this.summary = 0;
       }
-      console.log(this.summary)
     },
     handler () {
       if(this.name == '' || this.quantity === null || this.price === null) return;
@@ -196,6 +197,11 @@ export default {
     secondHandler (item,index) {
       this.removeItem(item,index);
       this.decreaseSummary(item);
+    },
+    thirdHandler (item) {
+      if(item.quantity === '' || item.price === '') return;
+      this.doneEdit(item);
+      this.getSummary();
     }
   }
 }
@@ -220,6 +226,13 @@ input {
   padding: 10px;
   margin-bottom: 15px;
 }
+
+.result-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 
 .addItem {
   background-color: rgb(11, 177, 163);
@@ -257,28 +270,24 @@ input {
 .item-block {
   display: flex;
   justify-content: space-between;
-  width: 80%;
+  align-items: center;
   padding: 15px 9px;
   text-align: left;
 }
 
-.item-block span {
+.item-block .item-wrapper {
+  width: 7%;
+}
+
+.item-block .item-wrapper span {
   font-size: 0.83em;
 }
 
-
-.item-block div {
-  width: 10%;
+.item-block .item-wrapper .editInput {
+  margin: 0;
+  padding: 0;
+  width: 100%;
 }
-
-.item-block div:first-of-type {
-  margin-right: 20px;
-}
-
-.item-block .price-block {
-  margin-left: 15px;
-}
-
 
 .item-block .garbage {
   display: flex;
