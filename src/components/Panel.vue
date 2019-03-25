@@ -21,7 +21,7 @@
       >
       <button 
       class="addItem" 
-      @click="createItem"
+      @click="handler"
       >ADD ITEM
       </button>
     </div>
@@ -73,7 +73,7 @@
               <font-awesome-icon
               icon="trash" 
               class="trash-icon"
-              @click="removeItem(item,index)"
+              @click="secondHandler(item,index)"
               />
             </div>
             <div v-if="!item.editing">
@@ -100,7 +100,7 @@
       </div>
     </div>
     <div class="summary">
-      <h2>Summary: $</h2>
+      <h2>Summary: ${{summary}}</h2>
     </div>
   </div>
 </template>
@@ -111,6 +111,9 @@ export default {
   name: 'Panel',
   data () {
     return {
+      priceSummary: 0,
+      quantitySummary: 0,
+      summary: 0,
       localName: null,
       localQuantity: null,
       localPrice: null,
@@ -124,9 +127,7 @@ export default {
     }
   },
   methods: {
-    createItem () {
-      if(this.name == '' || this.quantity === null || this.price === null) return;
-      
+    createItem () {      
       this.items.push({
         name: this.name,
         quantity: this.quantity,
@@ -166,6 +167,35 @@ export default {
       item.quantity = prevItem.quantity;
       item.price = prevItem.price;
       item.editing = false;
+    },
+    getSummary () {
+        let initialValue = 0;
+        this.priceSummary = this.items.reduce((accum,currentValue) => {
+          return +accum + +currentValue.price;
+        },initialValue);
+        this.quantitySummary = this.items.reduce((accum,currentValue) => {
+          return +accum + +currentValue.quantity; 
+        },initialValue);
+        this.summary = this.priceSummary * this.quantitySummary;
+    },
+    decreaseSummary (item) {
+      this.priceSummary = this.priceSummary - item.price;
+      this.quantitySummary = this.quantitySummary - item.quantity;
+      let genenalSum = this.priceSummary * this.quantitySummary;
+      this.summary = genenalSum;
+      if(this.items.length === 0) {
+        this.summary = 0;
+      }
+      console.log(this.summary)
+    },
+    handler () {
+      if(this.name == '' || this.quantity === null || this.price === null) return;
+      this.createItem();
+      this.getSummary();
+    },
+    secondHandler (item,index) {
+      this.removeItem(item,index);
+      this.decreaseSummary(item);
     }
   }
 }
