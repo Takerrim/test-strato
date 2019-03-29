@@ -33,72 +33,17 @@
           <h5>Price</h5>
         </div>
       </div>
-      <div 
-      v-for="(item,index) in items"
+      <div>
+      <todo-item v-for="(item,index) in items"
       :key="index"
+      :item="item"
+      :index="index"
+      @removedItem="secondHandler(item,index)"
+      @editingItem="editItem(item)"
+      @saveChanges="thirdHandler"
+      @cancelEditing="cancelEdit(item)"
       >
-      <div class="item-block">
-        <div>
-          <span class="item-name">{{item.name}}</span>
-        </div>
-        <div class="item-wrapper">
-          <span 
-          class="item-quantity" 
-          v-if="!item.editing"
-          >
-          {{item.quantity}}
-          </span>
-          <input 
-          class="editInput"
-          type="number" 
-          v-model="item.quantity" 
-          v-else 
-          >
-        </div>
-          <div class="item-wrapper">
-            <span 
-          class="item-price" 
-          v-if="!item.editing"
-          >
-          ${{item.price}}
-          </span>
-          <input
-          class="editInput" 
-          type="number" 
-          v-model="item.price" 
-          v-else 
-          >
-          </div>
-        <div>
-          <div class="garbage">
-            <div v-if="!item.editing">
-              <font-awesome-icon
-              icon="trash" 
-              class="trash-icon"
-              @click="secondHandler(item,index)"
-              />
-            </div>
-            <div v-if="!item.editing">
-              <font-awesome-icon
-              icon="pencil-ruler" 
-              @click="editItem(item)"
-              />
-            </div>
-            <div v-if="item.editing"> 
-              <font-awesome-icon
-              icon="save" 
-              @click="thirdHandler(item)"
-              />
-            </div>
-            <div v-if="item.editing">
-              <font-awesome-icon
-              icon="window-close" 
-              @click="cancelEdit(item,index)"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      </todo-item>
       </div>
     </div>
     <div class="summary">
@@ -108,9 +53,13 @@
 </template>
 
 <script>
+import TodoItem from './TodoItem.vue'
 
 export default {
   name: 'Panel',
+  components: {
+    TodoItem
+  },
   data () {
     return {
       priceSummary: 0,
@@ -141,7 +90,6 @@ export default {
       let localStor = JSON.parse(localStorage['items']);
       this.localItems = localStor;
       this.counter++;
-      
       this.visible = true;
       this.name = '';
       this.quantity = null;
@@ -154,12 +102,12 @@ export default {
       localStorage.setItem('items', JSON.stringify(this.localItems));
     },
     editItem (item) {
-      let editedItems = [...this.items];
-      localStorage.setItem('items', JSON.stringify(editedItems));
-      item.editing = true;
+      item.editing = true
     },
-    doneEdit (item) {
-      item.editing = false;
+    doneEdit (data) {
+      this.items.splice(data.index, 1, data.item)
+      let editedItems = [...this.items]
+      localStorage.setItem('items', JSON.stringify(editedItems))
     },
     cancelEdit (item) {
       let prevArr = JSON.parse(localStorage['items']);
@@ -174,11 +122,12 @@ export default {
         let initialValue = 0;
         this.priceSummary = this.items.reduce((accum,currentValue) => {
           return +accum + +currentValue.price;
-        },initialValue);
+        },initialValue); // add initialValue to reduce property of object
         this.quantitySummary = this.items.reduce((accum,currentValue) => {
           return +accum + +currentValue.quantity; 
         },initialValue);
         this.summary = this.priceSummary * this.quantitySummary;
+        
     },
     decreaseSummary (item) {
       this.priceSummary = this.priceSummary - item.price;
@@ -190,7 +139,7 @@ export default {
       }
     },
     handler () {
-      if(this.name == '' || this.quantity === null || this.price === null) return;
+      if(this.name === '' || this.quantity === null || this.price === null) return;
       this.createItem();
       this.getSummary();
     },
@@ -198,9 +147,8 @@ export default {
       this.removeItem(item,index);
       this.decreaseSummary(item);
     },
-    thirdHandler (item) {
-      if(item.quantity === '' || item.price === '') return;
-      this.doneEdit(item);
+    thirdHandler (data) {
+      this.doneEdit(data);
       this.getSummary();
     }
   }
@@ -219,7 +167,7 @@ export default {
   flex-direction: column;
 }
 
-input {
+.input-block  input{
   border: none;
   border-bottom: 1px solid grey;
   font-size: 12px;
@@ -247,6 +195,7 @@ input {
 
 .container {
   border-bottom: 1px solid rgba(0,0,0,0.3);
+  margin-bottom: -1px;  
 }
 .container .heading-block {
   display: flex;
@@ -266,36 +215,4 @@ input {
   font-weight: lighter;
   margin: 0;
 }
-
-.item-block {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 9px;
-  text-align: left;
-}
-
-.item-block .item-wrapper {
-  width: 7%;
-}
-
-.item-block .item-wrapper span {
-  font-size: 0.83em;
-}
-
-.item-block .item-wrapper .editInput {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-}
-
-.item-block .garbage {
-  display: flex;
-  cursor: pointer;
-}
-
-.item-block .garbage div {
-  margin-right: 45px;
-}
-
 </style>
