@@ -1,29 +1,10 @@
 <template>
   <div class="panel">
     <div class="input-block">
-      <input 
-      type="text" 
-      placeholder="Name" 
-      class="name" 
-      v-model="name"
-      >
-      <input 
-      type="number" 
-      placeholder="Quantity" 
-      class="quantity" 
-      v-model="quantity"
-      >
-      <input 
-      type="number" 
-      placeholder="Price" 
-      class="price" 
-      v-model="price"
-      >
-      <button 
-      class="addItem" 
-      @click="handler"
-      >ADD ITEM
-      </button>
+      <input type="text" placeholder="Name" class="name" v-model="name">
+      <input type="number" placeholder="Quantity" class="quantity" v-model="quantity">
+      <input type="number" placeholder="Price" class="price" v-model="price">
+      <button class="addItem" @click="handler">ADD ITEM</button>
     </div>
     <div class="result-block">
       <div class="container">
@@ -34,16 +15,7 @@
         </div>
       </div>
       <div>
-      <todo-item v-for="(item,index) in items"
-      :key="index"
-      :item="item"
-      :index="index"
-      @removedItem="secondHandler(item,index)"
-      @editingItem="editItem(item)"
-      @saveChanges="thirdHandler"
-      @cancelEditing="cancelEdit(item)"
-      >
-      </todo-item>
+        <todo-item v-for="(item,index) in items" :key="index" :item="item" :index="index"></todo-item>
       </div>
     </div>
     <div class="summary">
@@ -53,14 +25,14 @@
 </template>
 
 <script>
-import TodoItem from './TodoItem.vue'
+import TodoItem from "./TodoItem.vue";
 
 export default {
-  name: 'Panel',
+  name: "Panel",
   components: {
     TodoItem
   },
-  data () {
+  data() {
     return {
       priceSummary: 0,
       quantitySummary: 0,
@@ -69,96 +41,90 @@ export default {
       localQuantity: null,
       localPrice: null,
       counter: 0,
-      name: '',
+      name: "",
       quantity: null,
       price: null,
       visible: false,
       items: [],
       localItems: []
-    }
+    };
+  },
+  created() {
+    eventBus.$on("removedItem", (item, index) => {
+      return this.secondHandler(item, index);
+    });
+    eventBus.$on("saveChanges", (data) => this.thirdHandler(data));
   },
   methods: {
-    createItem () {      
+    createItem() {
       this.items.push({
         name: this.name,
         quantity: this.quantity,
         price: this.price,
         id: this.counter,
-        editing: false,
-      })
-      localStorage.setItem('items', JSON.stringify(this.items));
-      let localStor = JSON.parse(localStorage['items']);
+        editing: false
+      });
+      localStorage.setItem("items", JSON.stringify(this.items));
+      let localStor = JSON.parse(localStorage["items"]);
       this.localItems = localStor;
       this.counter++;
       this.visible = true;
-      this.name = '';
+      this.name = "";
       this.quantity = null;
       this.price = null;
     },
-    removeItem (item,index) {
-      this.items.splice(index,1);
-      this.localItems.splice(index,1);
+    removeItem(item, index) {
+      this.items.splice(index, 1);
+      this.localItems.splice(index, 1);
       this.counter--;
-      localStorage.setItem('items', JSON.stringify(this.localItems));
+      localStorage.setItem("items", JSON.stringify(this.localItems));
     },
-    editItem (item) {
-      item.editing = true
+    doneEdit(data) {
+      this.items.splice(data.index, 1, data.item);
+      let editedItems = [...this.items];
+      localStorage.setItem("items", JSON.stringify(editedItems));
     },
-    doneEdit (data) {
-      this.items.splice(data.index, 1, data.item)
-      let editedItems = [...this.items]
-      localStorage.setItem('items', JSON.stringify(editedItems))
+    getSummary() {
+      let initialValue = 0;
+      this.priceSummary = this.items.reduce((accum, currentValue) => {
+        return +accum + +currentValue.price;
+      }, initialValue); // add initialValue to reduce property of object
+      this.quantitySummary = this.items.reduce((accum, currentValue) => {
+        return +accum + +currentValue.quantity;
+      }, initialValue);
+      this.summary = this.priceSummary * this.quantitySummary;
     },
-    cancelEdit (item) {
-      let prevArr = JSON.parse(localStorage['items']);
-      let prevItem = prevArr.find(i => {
-        return i.id === item.id;
-      });
-      item.quantity = prevItem.quantity;
-      item.price = prevItem.price;
-      item.editing = false;
-    },
-    getSummary () {
-        let initialValue = 0;
-        this.priceSummary = this.items.reduce((accum,currentValue) => {
-          return +accum + +currentValue.price;
-        },initialValue); // add initialValue to reduce property of object
-        this.quantitySummary = this.items.reduce((accum,currentValue) => {
-          return +accum + +currentValue.quantity; 
-        },initialValue);
-        this.summary = this.priceSummary * this.quantitySummary;
-        
-    },
-    decreaseSummary (item) {
+    decreaseSummary(item) {
       this.priceSummary = this.priceSummary - item.price;
       this.quantitySummary = this.quantitySummary - item.quantity;
       let genenalSum = this.priceSummary * this.quantitySummary;
       this.summary = genenalSum;
-      if(this.items.length === 0) {
+      if (this.items.length === 0) {
         this.summary = 0;
       }
     },
-    handler () {
-      if(this.name === '' || this.quantity === null || this.price === null) return;
+    handler() {
+      if (this.name === "" || this.quantity === null || this.price === null)
+        return;
       this.createItem();
       this.getSummary();
     },
-    secondHandler (item,index) {
-      this.removeItem(item,index);
+    secondHandler(item, index) {
+      this.removeItem(item, index);
       this.decreaseSummary(item);
     },
-    thirdHandler (data) {
+    thirdHandler(data) {
       this.doneEdit(data);
       this.getSummary();
     }
   }
-}
+};
 </script>
 
 <style scoped>
 .panel {
   width: 800px;
-  box-shadow: 0 3px 5px rgba(0,0,0,0.3);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
   padding: 15px;
 }
 
@@ -167,7 +133,7 @@ export default {
   flex-direction: column;
 }
 
-.input-block  input{
+.input-block input {
   border: none;
   border-bottom: 1px solid grey;
   font-size: 12px;
@@ -181,7 +147,6 @@ export default {
   justify-content: space-between;
 }
 
-
 .addItem {
   background-color: rgb(11, 177, 163);
   color: #ffffff;
@@ -189,13 +154,13 @@ export default {
   padding: 10px 0px;
   font-size: 13px;
   border-radius: 3px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
 
 .container {
-  border-bottom: 1px solid rgba(0,0,0,0.3);
-  margin-bottom: -1px;  
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  margin-bottom: -1px;
 }
 .container .heading-block {
   display: flex;

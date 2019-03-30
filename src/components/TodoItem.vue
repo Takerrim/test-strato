@@ -89,18 +89,17 @@
     },
     methods: {
       itemHandler(index) {
-        this.$emit('removedItem', index)
+        eventBus.$emit('removedItem', index)
       },
       editedItem() {
         this.beforeEditingPrice = this.price
         this.beforeEditingQuantity = this.quantity
         this.editing = true
-        this.$emit('editingItem')
       },
       saveChanges() {
         if(this.quantity === '' || this.price === '') return
         this.editing = false
-        this.$emit('saveChanges', {
+          eventBus.$emit('saveChanges', {
           index: this.index,
           item: {
             name: this.name,
@@ -112,7 +111,6 @@
       })
       },
       cancelEditItem () {
-        this.$emit('cancelEditing')
         this.editing = false
         this.price = this.beforeEditingPrice
         this.quantity = this.beforeEditingQuantity
