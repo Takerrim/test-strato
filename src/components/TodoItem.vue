@@ -37,7 +37,7 @@
               <font-awesome-icon
               icon="trash" 
               class="trash-icon"
-              @click="itemHandler(index)"
+              @click="removeHandler(item,index)"
               />
             </div>
             <div v-if="!editing">
@@ -88,13 +88,16 @@
       }
     },
     methods: {
-      itemHandler(index) {
-        eventBus.$emit('removedItem', index)
-      },
       editedItem() {
         this.beforeEditingPrice = this.price
         this.beforeEditingQuantity = this.quantity
         this.editing = true
+      },
+      removeItem(item, index) {
+      this.$store.commit('removeItem',index)
+    },
+    decreaseSummary(item) {
+      this.$store.commit('decreaseSummary', item)
       },
       saveChanges() {
         if(this.quantity === '' || this.price === '') return
@@ -114,7 +117,11 @@
         this.editing = false
         this.price = this.beforeEditingPrice
         this.quantity = this.beforeEditingQuantity
-      }
+      },
+      removeHandler (item,index) {
+        this.decreaseSummary(item)
+        this.removeItem(item,index)
+      } 
     }
   }
 </script>

@@ -15,11 +15,11 @@
         </div>
       </div>
       <div>
-        <todo-item v-for="(item,index) in items" :key="index" :item="item" :index="index"></todo-item>
+        <todo-item v-for="(item,index) in this.$store.getters.getItems" :key="index" :item="item" :index="index"></todo-item>
       </div>
     </div>
     <div class="summary">
-      <h2>Summary: ${{summary}}</h2>
+      <h2>Summary: ${{this.$store.getters.getSummary}}</h2>
     </div>
   </div>
 </template>
@@ -34,9 +34,6 @@ export default {
   },
   data() {
     return {
-      priceSummary: 0,
-      quantitySummary: 0,
-      summary: 0,
       localName: null,
       localQuantity: null,
       localPrice: null,
@@ -45,8 +42,6 @@ export default {
       quantity: null,
       price: null,
       visible: false,
-      items: [],
-      localItems: []
     };
   },
   created() {
@@ -56,62 +51,41 @@ export default {
     eventBus.$on("saveChanges", (data) => this.thirdHandler(data));
   },
   methods: {
-    createItem() {
-      this.items.push({
+    addItem() {
+      this.$store.commit('addItem', {
         name: this.name,
         quantity: this.quantity,
         price: this.price,
         id: this.counter,
         editing: false
-      });
-      localStorage.setItem("items", JSON.stringify(this.items));
-      let localStor = JSON.parse(localStorage["items"]);
-      this.localItems = localStor;
+      })
       this.counter++;
       this.visible = true;
       this.name = "";
       this.quantity = null;
       this.price = null;
     },
-    removeItem(item, index) {
-      this.items.splice(index, 1);
-      this.localItems.splice(index, 1);
-      this.counter--;
-      localStorage.setItem("items", JSON.stringify(this.localItems));
+    cancelEdit () {
+      let initialValue = 0;
+      this.$store.getters.getPriceSummary = this.$store.getters.getItems.reduce((accum,currentValue) => {
+        return +accum + +currentValue.price;
+      },initialValue); // add initialValue to reduce property of object
+      this.$store.getters.getQuantitySummary = this.$store.getters.getItems.reduce((accum,currentValue) => {
+        return +accum + +currentValue.quantity; 
+      },initialValue);
+      this.$store.getters.getSummary = this.$store.getters.getPriceSummary * this.$store.getters.getQuantitySummary; 
     },
     doneEdit(data) {
-      this.items.splice(data.index, 1, data.item);
-      let editedItems = [...this.items];
-      localStorage.setItem("items", JSON.stringify(editedItems));
+      this.$store.getters.getItems.splice(data.index, 1, data.item);
     },
     getSummary() {
-      let initialValue = 0;
-      this.priceSummary = this.items.reduce((accum, currentValue) => {
-        return +accum + +currentValue.price;
-      }, initialValue); // add initialValue to reduce property of object
-      this.quantitySummary = this.items.reduce((accum, currentValue) => {
-        return +accum + +currentValue.quantity;
-      }, initialValue);
-      this.summary = this.priceSummary * this.quantitySummary;
-    },
-    decreaseSummary(item) {
-      this.priceSummary = this.priceSummary - item.price;
-      this.quantitySummary = this.quantitySummary - item.quantity;
-      let genenalSum = this.priceSummary * this.quantitySummary;
-      this.summary = genenalSum;
-      if (this.items.length === 0) {
-        this.summary = 0;
-      }
+      this.$store.commit('addSummary')
     },
     handler() {
       if (this.name === "" || this.quantity === null || this.price === null)
         return;
-      this.createItem();
+      this.addItem();
       this.getSummary();
-    },
-    secondHandler(item, index) {
-      this.removeItem(item, index);
-      this.decreaseSummary(item);
     },
     thirdHandler(data) {
       this.doneEdit(data);
